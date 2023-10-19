@@ -1,0 +1,17 @@
+*{
+  box-sizing: border-box;
+  font-family: 'Open Sans', sans-serif !important;
+}
+body{
+  margin:0
+}
+
+button{
+  border: none;
+  outline: none;
+  background: none;
+  cursor: pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
