@@ -107,7 +107,7 @@ export default function ContactListPage() {
         </>
       );
     }
-  }, [data?.contact, dataChanged, deleteContact]);
+  }, [data?.contact, dataChanged, deleteContact, navigateToEdit]);
 
   return (
     <>
