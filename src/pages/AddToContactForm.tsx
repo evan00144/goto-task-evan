@@ -43,7 +43,7 @@ export default function AddToContactForm() {
       }
     }
   `;
-  const { loading, error, data } = useQuery(GET_CONTACT, {
+  const {  data } = useQuery(GET_CONTACT, {
     variables: { id },
   });
 
