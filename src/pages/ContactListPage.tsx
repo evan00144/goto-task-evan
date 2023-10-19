@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { css } from "@emotion/css";
 import React, { useCallback, useMemo, useState } from "react";
@@ -148,7 +149,7 @@ const ContactCard = ({
   dataChanged,
   onClickDelete,
   navigateToEdit
-}) => {
+}:any) => {
   const favorite = JSON.parse(localStorage.getItem("favorite") as string);
   const addToFavorite = (contact: any) => {
     setDataChanged(!dataChanged);
@@ -184,7 +185,6 @@ const ContactCard = ({
         align-items: center;
         box-shadow: 0 0.4rem 0.6rem rgba(0, 0, 0, 0.15);
       `}
-      key={contact?.id}
     >
       <div
         className={css`
@@ -290,7 +290,7 @@ const ContactCard = ({
           className={css`
             width: 1rem;
             height: 1rem;
-            color: ${favorite?.find((fav) => fav.id == contact?.id)
+            color: ${favorite?.find((fav:any) => fav.id == contact?.id)
               ? "#F59E0B"
               : "#222"};
           `}
