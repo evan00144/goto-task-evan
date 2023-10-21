@@ -59,13 +59,16 @@ export default function ContactListPage() {
 
   const renderData = useMemo(() => {
     const favorite = JSON.parse(localStorage.getItem("favorite") as string);
+    let result = data?.contact;
     if (favorite) {
-      const result = data?.contact?.filter(
+      result = data?.contact?.filter(
         (item: any) =>
           !favorite.some((favorite: any) => favorite.id === item.id)
       );
-      return (
-        <>
+    }
+    return (
+      <>
+        {favorite?.length === 0 && (
           <h2
             className={css`
               margin: 0;
@@ -74,39 +77,39 @@ export default function ContactListPage() {
           >
             Favorites
           </h2>
-          {favorite?.map((contact: any) => (
-            <React.Fragment key={contact?.id}>
-              <ContactCard
-                contact={contact}
-                setDataChanged={setDataChanged}
-                onClickDelete={() => deleteContact(contact.id)}
-                dataChanged={dataChanged}
-                navigateToEdit={() => navigateToEdit(contact.id)}
-              />
-            </React.Fragment>
-          ))}
-          <h2
-            className={css`
-              margin-bottom: 0;
-              font-size: 1.2rem;
-            `}
-          >
-            Regular Contact
-          </h2>
-          {result?.map((contact: any) => (
-            <React.Fragment key={contact?.id}>
-              <ContactCard
-                contact={contact}
-                setDataChanged={setDataChanged}
-                dataChanged={dataChanged}
-                onClickDelete={() => deleteContact(contact.id)}
-                navigateToEdit={() => navigateToEdit(contact.id)}
-              />
-            </React.Fragment>
-          ))}
-        </>
-      );
-    }
+        )}
+        {favorite?.map((contact: any) => (
+          <React.Fragment key={contact?.id}>
+            <ContactCard
+              contact={contact}
+              setDataChanged={setDataChanged}
+              onClickDelete={() => deleteContact(contact.id)}
+              dataChanged={dataChanged}
+              navigateToEdit={() => navigateToEdit(contact.id)}
+            />
+          </React.Fragment>
+        ))}
+        <h2
+          className={css`
+            margin-bottom: 0;
+            font-size: 1.2rem;
+          `}
+        >
+          Regular Contact
+        </h2>
+        {result?.map((contact: any) => (
+          <React.Fragment key={contact?.id}>
+            <ContactCard
+              contact={contact}
+              setDataChanged={setDataChanged}
+              dataChanged={dataChanged}
+              onClickDelete={() => deleteContact(contact.id)}
+              navigateToEdit={() => navigateToEdit(contact.id)}
+            />
+          </React.Fragment>
+        ))}
+      </>
+    );
   }, [data?.contact, dataChanged, deleteContact, navigateToEdit]);
 
   return (
@@ -148,8 +151,8 @@ const ContactCard = ({
   setDataChanged,
   dataChanged,
   onClickDelete,
-  navigateToEdit
-}:any) => {
+  navigateToEdit,
+}: any) => {
   const favorite = JSON.parse(localStorage.getItem("favorite") as string);
   const addToFavorite = (contact: any) => {
     setDataChanged(!dataChanged);
@@ -290,7 +293,7 @@ const ContactCard = ({
           className={css`
             width: 1rem;
             height: 1rem;
-            color: ${favorite?.find((fav:any) => fav.id == contact?.id)
+            color: ${favorite?.find((fav: any) => fav.id == contact?.id)
               ? "#F59E0B"
               : "#222"};
           `}
