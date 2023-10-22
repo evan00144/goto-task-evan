@@ -1,8 +1,8 @@
 import { BrowserRouter, Route,  Routes } from 'react-router-dom'
 import './App.css'
 import ContactListPage from './pages/ContactListPage'
-import AddToContactForm from './pages/AddToContactForm'
 import DetailContactPage from './pages/DetailContactPage'
+import AddToContactForm from './pages/AddToContactForm'
 
 function App() {
 

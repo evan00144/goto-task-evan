@@ -10,17 +10,24 @@ const inputStyles = css`
   width: 100%;
   padding: 8px;
   border-radius: 5px;
-  border: 1px solid #ddd;
+  border: 1px solid transparent;
   margin-bottom: 10px;
+  margin-top: 0.5rem;
+  &:focus {
+    border: 1px solid #00850b;
+  }
+  &:focus-visible {
+    outline: none;
+  }
 `;
 
 const buttonStyles = css`
-  background-color: #007bff;
-  color: #fff;
-  padding: 10px 20px;
+  background-color: transparent;
+  color: #00850b;
+  font-weight: 600;
   border: none;
+  margin-top: 1rem;
   cursor: pointer;
-  border-radius: 5px;
 `;
 
 export default function AddToContactForm() {
@@ -107,8 +114,8 @@ export default function AddToContactForm() {
     }
   `;
 
-  const [addContact, { data: addData }] = useMutation(ADD_CONTACT);
-  const [editContact] = useMutation(EDIT_CONTACT);
+  const [addContact, { error: errorData ,data:addData}] = useMutation(ADD_CONTACT);
+  const [editContact,{data:editData}] = useMutation(EDIT_CONTACT);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -117,6 +124,18 @@ export default function AddToContactForm() {
       [name]: value,
     });
   };
+  console.log(errorData);
+console.log(addData)
+  useEffect(() => {
+    if (errorData) {
+      alert("Phone Number must be unique");
+      return
+    } else {
+      if (addData?.insert_contact || editData?.update_contact_by_pk) {
+        window.location.href = "/";
+      }
+    }
+  }, [errorData,addData,editData]);
 
   const handlePhoneChange = (e: any) => {
     const { name, value } = e.target;
@@ -137,6 +156,12 @@ export default function AddToContactForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.first_name || !formData.last_name) {
+      return alert("Please fill all fields");
+    }
+    if (!id) {
+      if (!formData.phones[0].number) return alert("Please fill phone number");
+    }
     if (id) {
       if (data?.contact_by_pk) {
         editContact({
@@ -165,22 +190,31 @@ export default function AddToContactForm() {
         },
       });
     }
-    window.location.href="/";
-    // navigate("/");
+    // window.location.href = "/";
   };
 
   return (
     <>
-      <Header />
+      <Header handleSubmit={handleSubmit} />
       <form
+        noValidate
         className={css`
           padding: 0 1rem 1rem 1rem;
         `}
         onSubmit={handleSubmit}
       >
         <div>
-          <label htmlFor="first_name">First Name</label>
+          <label
+            className={css`
+              font-weight: bold;
+              font-size: 0.8rem;
+            `}
+            htmlFor="first_name"
+          >
+            First Name
+          </label>
           <input
+            required
             type="text"
             id="first_name"
             name="first_name"
@@ -191,8 +225,17 @@ export default function AddToContactForm() {
         </div>
 
         <div>
-          <label htmlFor="last_name">Last Name</label>
+          <label
+            className={css`
+              font-weight: bold;
+              font-size: 0.8rem;
+            `}
+            htmlFor="last_name"
+          >
+            Last Name
+          </label>
           <input
+            required
             type="text"
             id="last_name"
             name="last_name"
@@ -201,10 +244,25 @@ export default function AddToContactForm() {
             className={inputStyles}
           />
         </div>
-
+        <label
+          className={css`
+            font-weight: bold;
+            font-size: 0.8rem;
+          `}
+        >
+          Phone
+        </label>
+        {formData.phones.length <= 0 && (
+          <div
+            className={css`
+              font-size: 0.7rem;
+            `}
+          >
+            No Phone Number
+          </div>
+        )}
         {formData.phones.map((phone, index) => (
           <div key={index}>
-            <label htmlFor={`phone${index}`}>Phone</label>
             {id ? (
               <div>
                 <span
@@ -217,12 +275,26 @@ export default function AddToContactForm() {
               </div>
             ) : (
               <input
-                type="text"
+                required
+                type="number"
                 id={`phone${index}`}
                 name={index.toString()}
                 value={phone.number}
                 onChange={handlePhoneChange}
-                className={inputStyles}
+                className={css`
+                  width: 100%;
+                  padding: 8px;
+                  border-radius: 5px;
+                  border: 1px solid transparent;
+                  margin-bottom: 10px;
+                  margin-top: 0.5rem;
+                  &:focus {
+                    border: 1px solid #00850b;
+                  }
+                  &:focus-visible {
+                    outline: none;
+                  }
+                `}
               />
             )}
           </div>
@@ -230,7 +302,6 @@ export default function AddToContactForm() {
         <div
           className={css`
             display: flex;
-            // justify-content: flex-end;
             gap: 0.5rem;
           `}
         >
@@ -239,9 +310,10 @@ export default function AddToContactForm() {
               Add Phone
             </button>
           )}
-          <button type="submit" className={buttonStyles}>
+
+          {/* <button type="submit" className={buttonStyles}>
             {id ? "Edit" : "Add"} Contact
-          </button>
+          </button> */}
         </div>
       </form>
     </>
