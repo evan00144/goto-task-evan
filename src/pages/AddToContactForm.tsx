@@ -4,7 +4,10 @@ import React, { useEffect, useState } from "react";
 import { css } from "@emotion/css";
 import Header from "./Header";
 import { gql, useMutation, useQuery } from "@apollo/client";
-import { useNavigate, useParams } from "react-router-dom";
+import {
+  //  useNavigate,
+  useParams,
+} from "react-router-dom";
 
 const inputStyles = css`
   width: 100%;
@@ -32,7 +35,7 @@ const buttonStyles = css`
 
 export default function AddToContactForm() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -114,8 +117,9 @@ export default function AddToContactForm() {
     }
   `;
 
-  const [addContact, { error: errorData ,data:addData}] = useMutation(ADD_CONTACT);
-  const [editContact,{data:editData}] = useMutation(EDIT_CONTACT);
+  const [addContact, { error: errorData, data: addData }] =
+    useMutation(ADD_CONTACT);
+  const [editContact, { data: editData }] = useMutation(EDIT_CONTACT);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -125,17 +129,17 @@ export default function AddToContactForm() {
     });
   };
   console.log(errorData);
-console.log(addData)
+  console.log(addData);
   useEffect(() => {
     if (errorData) {
       alert("Phone Number must be unique");
-      return
+      return;
     } else {
       if (addData?.insert_contact || editData?.update_contact_by_pk) {
         window.location.href = "/";
       }
     }
-  }, [errorData,addData,editData]);
+  }, [errorData, addData, editData]);
 
   const handlePhoneChange = (e: any) => {
     const { name, value } = e.target;

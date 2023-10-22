@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import  { useCallback,  useMemo, useState } from "react";
 import { css } from "@emotion/css";
 import Header from "./Header";
-import { gql, useMutation, useQuery } from "@apollo/client";
+import { gql,  useQuery } from "@apollo/client";
 import { useNavigate, useParams } from "react-router-dom";
 
 export default function DetailContactPage() {
