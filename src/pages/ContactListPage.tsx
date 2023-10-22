@@ -2,7 +2,6 @@
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { css } from "@emotion/css";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { styled } from "styled-components";
 import Header from "./Header";
 import { useNavigate } from "react-router-dom";
 
@@ -89,99 +88,100 @@ export default function ContactListPage() {
   });
 
   const renderData = useMemo(() => {
-    const localData =
-      (localStorage.getItem("localData") as string) !== undefined
-        ? JSON.parse(localStorage.getItem("localData") as string)
-        : null;
-    if (localData) {
-      if (data) {
-        const tempData = data?.contact?.filter((item: any) =>
-          !localData?.some((local: any) => local.id === item.id)
-        );
-        console.log(tempData)
-        const result = [...tempData, ...localData];
-        localStorage.setItem("localData", JSON.stringify(result));
-      }
-    } else {
-      if (data) {
-        localStorage.setItem("localData", JSON.stringify(data?.contact));
-      }
-    }
     const favorite = (localStorage.getItem("favorite") as string)
       ? JSON.parse(localStorage.getItem("favorite") as string)
       : null;
-    let result = (localStorage.getItem("localData") as string) !== undefined
-    ? JSON.parse(localStorage.getItem("localData") as string)
-    : null;
+    let result = data?.contact;
     if (favorite) {
       result = result?.filter(
         (item: any) =>
           !favorite.some((favorite: any) => favorite.id === item.id)
       );
     }
+    const groupedData: any = {};
+
+    result?.forEach((item: any) => {
+      const firstLetter = item.first_name[0];
+      if (!groupedData[firstLetter]) {
+        groupedData[firstLetter] = [];
+      }
+      groupedData[firstLetter].push(item);
+    });
+
     return (
       <>
         {favorite?.length > 0 && (
-          <h2
-            className={css`
-              margin: 0;
-              font-size: 1rem;
-            `}
-          >
-            Favorites
-          </h2>
+          <>
+            <h2
+              className={css`
+                margin: 0;
+                font-size: 1rem;
+              `}
+            >
+              Favorites
+            </h2>
+            <div
+              className={css`
+                background: white;
+                display: flex;
+                flex-direction: column;
+                border-radius: 0.8rem;
+                padding: 0.5rem 20px;
+              `}
+            >
+              {favorite?.map((contact: any, index: number) => (
+                <React.Fragment key={contact?.id}>
+                  <ContactCard
+                    contact={contact}
+                    setDataChanged={setDataChanged}
+                    onClickDelete={() => deleteContact(contact.id, index)}
+                    dataChanged={dataChanged}
+                    navigateToEdit={() => navigateToEdit(contact.id)}
+                  />
+                </React.Fragment>
+              ))}
+            </div>
+          </>
         )}
-        <div
-          className={css`
-            background: white;
-            display: flex;
-            flex-direction: column;
-            border-radius: 0.8rem;
-            padding: 0.5rem 20px;
-          `}
-        >
-          {favorite?.map((contact: any, index: number) => (
-            <React.Fragment key={contact?.id}>
-              <ContactCard
-                contact={contact}
-                setDataChanged={setDataChanged}
-                onClickDelete={() => deleteContact(contact.id, index)}
-                dataChanged={dataChanged}
-                navigateToEdit={() => navigateToEdit(contact.id)}
-              />
-            </React.Fragment>
-          ))}
-        </div>
 
-        <h2
-          className={css`
-            margin-bottom: 0;
-            font-size: 1rem;
-          `}
-        >
-          Regular Contact
-        </h2>
-        <div
-          className={css`
-            background: white;
-            display: flex;
-            flex-direction: column;
-            border-radius: 0.8rem;
-            padding: 0.5rem 20px;
-          `}
-        >
-          {result?.map((contact: any) => (
-            <React.Fragment key={contact?.id}>
-              <ContactCard
-                contact={contact}
-                setDataChanged={setDataChanged}
-                dataChanged={dataChanged}
-                onClickDelete={() => deleteContact(contact.id)}
-                navigateToEdit={() => navigateToEdit(contact.id)}
-              />
+        {Object.keys(groupedData).map((alphabet: any, index: number) => {
+          return (
+            <React.Fragment key={index}>
+              <h2
+                className={css`
+                  margin: 0;
+                  font-size: 1rem;
+                `}
+              >
+                {alphabet}
+              </h2>
+              <div
+                className={css`
+                  background: white;
+                  display: flex;
+                  flex-direction: column;
+                  border-radius: 0.8rem;
+                  padding: 0.5rem 20px;
+                `}
+              >
+                {result?.map((contact: any) => {
+                  if (contact?.first_name[0] !== alphabet) return null;
+                  return (
+                    <React.Fragment key={contact?.id}>
+                      <ContactCard
+                        contact={contact}
+                        setDataChanged={setDataChanged}
+                        dataChanged={dataChanged}
+                        onClickDelete={() => deleteContact(contact.id)}
+                        navigateToEdit={() => navigateToEdit(contact.id)}
+                      />
+                    </React.Fragment>
+                  );
+                })}
+              </div>
             </React.Fragment>
-          ))}
-        </div>
+          );
+        })}
       </>
     );
   }, [data, dataChanged, deleteContact, navigateToEdit]);
@@ -191,7 +191,7 @@ export default function ContactListPage() {
       <Header />
       <div
         className={css`
-          padding: 1rem;
+          padding: 0 1rem 1rem 1rem ;
         `}
       >
         <div
@@ -209,45 +209,42 @@ export default function ContactListPage() {
   );
 }
 
-const Button = styled.button`
-  border: none;
-  border-radius: 0.8rem;
-  // padding: 0.2rem 0.4rem;
-  background-color: transparent;
-  line-height: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
+// const Button = styled.button`
+//   border: none;
+//   border-radius: 0.8rem;
+//   // padding: 0.2rem 0.4rem;
+//   background-color: transparent;
+//   line-height: 1;
+//   display: flex;
+//   justify-content: center;
+//   align-items: center;
+// `;
 
 const ContactCard = ({
   contact,
-  setDataChanged,
-  dataChanged,
-  onClickDelete,
-  navigateToEdit,
 }: any) => {
-  const favorite = JSON.parse(localStorage.getItem("favorite") as string);
-  const addToFavorite = (contact: any) => {
-    setDataChanged(!dataChanged);
-    const favorite = JSON.parse(localStorage.getItem("favorite") as string);
-    if (favorite) {
-      const exist = favorite.find((item: any) => item.id === contact.id);
-      if (!exist) {
-        localStorage.setItem(
-          "favorite",
-          JSON.stringify([...favorite, contact])
-        );
-      } else {
-        localStorage.setItem(
-          "favorite",
-          JSON.stringify(favorite.filter((item: any) => item.id !== contact.id))
-        );
-      }
-    } else {
-      localStorage.setItem("favorite", JSON.stringify([contact]));
-    }
-  };
+  const navigate = useNavigate();
+  // const favorite = JSON.parse(localStorage.getItem("favorite") as string);
+  // const addToFavorite = (contact: any) => {
+  //   setDataChanged(!dataChanged);
+  //   const favorite = JSON.parse(localStorage.getItem("favorite") as string);
+  //   if (favorite) {
+  //     const exist = favorite.find((item: any) => item.id === contact.id);
+  //     if (!exist) {
+  //       localStorage.setItem(
+  //         "favorite",
+  //         JSON.stringify([...favorite, contact])
+  //       );
+  //     } else {
+  //       localStorage.setItem(
+  //         "favorite",
+  //         JSON.stringify(favorite.filter((item: any) => item.id !== contact.id))
+  //       );
+  //     }
+  //   } else {
+  //     localStorage.setItem("favorite", JSON.stringify([contact]));
+  //   }
+  // };
   return (
     <div
       key={contact?.id}
@@ -256,6 +253,7 @@ const ContactCard = ({
         border-bottom: 2px solid #f7f7f7;
         height: 100%;
         display: flex;
+        cursor: pointer;
         flex-direction: row;
         justify-content: between;
         align-items: center;
@@ -263,6 +261,7 @@ const ContactCard = ({
           border-bottom: none;
         }
       `}
+      onClick={() => navigate(`/detail/${contact?.id}`)}
     >
       <div
         className={css`
@@ -271,7 +270,7 @@ const ContactCard = ({
           height: 3rem;
           border-radius: 50%;
           background-color: #f7f7f7;
-          color: #00850b;
+          color: #00850b !important;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -307,7 +306,7 @@ const ContactCard = ({
           {contact?.phones[0]?.number || "No phone number"}
         </div>
       </div>
-      <Button
+      {/* <Button
         name="Edit"
         className={css`
           margin-left: auto;
@@ -384,7 +383,7 @@ const ContactCard = ({
             d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
           />
         </svg>
-      </Button>
+      </Button> */}
     </div>
   );
 };

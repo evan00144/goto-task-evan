@@ -6,13 +6,12 @@ export default function Header() {
   return (
     <div
       className={css`
-        padding: 1rem 1rem;
-        border-bottom: 1px solid #ddd;
+        padding: 2rem 1rem;
         display: flex;
         align-items: center;
       `}
     >
-      {window.location.pathname ==="/" ? null : (
+      {window.location.pathname === "/" ? null : (
         <button
           name="Back"
           onClick={() => navigate("/")}
@@ -26,37 +25,39 @@ export default function Header() {
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
+            height={20}
             strokeWidth={1.5}
             stroke="currentColor"
-            className={css`
-              width: 1.5rem;
-              height: 1.5rem;
-            `}
           >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
+              d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
             />
           </svg>
         </button>
       )}
 
-      <h1
+      <h4
         className={css`
           margin: 0;
+          font-weight: ;
           margin-right: auto;
         `}
       >
-        Header
-      </h1>
-      {window.location.pathname.includes("/add") ? null : (
+        {window.location.pathname.includes("/add") && "Add Contact"}
+        {window.location.pathname == "/" && "Contact"}
+        {window.location.pathname.includes("/detail") && "Detail Contact"}
+      </h4>
+      {window.location.pathname.includes("/add") ||
+      window.location.pathname.includes("/detail") ? null : (
         <button
           name="Add"
           onClick={() => navigate("/add")}
           className={css`
             background-color: transparent;
             border: none;
+            color: #00850b !important;
           `}
         >
           <svg

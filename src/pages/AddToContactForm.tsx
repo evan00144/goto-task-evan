@@ -157,13 +157,6 @@ export default function AddToContactForm() {
         localStorage.setItem("favorite", JSON.stringify(favorite));
       }
     } else {
-      const localData = JSON.parse(localStorage.getItem("localData") as string);
-      localData.push({
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        phones: formData.phones,
-      });
-      localStorage.setItem("localData", JSON.stringify(localData));
       addContact({
         variables: {
           first_name: formData.first_name,
@@ -172,7 +165,8 @@ export default function AddToContactForm() {
         },
       });
     }
-    navigate("/");
+    window.location.href="/";
+    // navigate("/");
   };
 
   return (
@@ -180,7 +174,7 @@ export default function AddToContactForm() {
       <Header />
       <form
         className={css`
-          padding: 1rem;
+          padding: 0 1rem 1rem 1rem;
         `}
         onSubmit={handleSubmit}
       >
