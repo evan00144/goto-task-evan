@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { css } from "@emotion/css";
 import Header from "./Header";
 import { gql, useMutation, useQuery } from "@apollo/client";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const inputStyles = css`
   width: 100%;
@@ -25,6 +25,7 @@ const buttonStyles = css`
 
 export default function AddToContactForm() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -43,21 +44,30 @@ export default function AddToContactForm() {
       }
     }
   `;
-  const {  data } = useQuery(GET_CONTACT, {
+  const { data } = useQuery(GET_CONTACT, {
     variables: { id },
   });
 
-  console.log(data);
   useEffect(() => {
-    if (data) {
+    if (data?.contact_by_pk) {
       const { contact_by_pk } = data;
       setFormData({
         first_name: contact_by_pk.first_name,
         last_name: contact_by_pk.last_name,
         phones: contact_by_pk.phones,
       });
+    } else {
+      if (data) {
+        const favorite = JSON.parse(localStorage.getItem("favorite") as string);
+        const contact = favorite.find((item: any) => item.id === Number(id));
+        setFormData({
+          first_name: contact.first_name,
+          last_name: contact.last_name,
+          phones: contact.phones,
+        });
+      }
     }
-  }, [data]);
+  }, [data, id]);
 
   const ADD_CONTACT = gql`
     mutation AddContactWithPhones(
@@ -97,7 +107,7 @@ export default function AddToContactForm() {
     }
   `;
 
-  const [addContact] = useMutation(ADD_CONTACT);
+  const [addContact, { data: addData }] = useMutation(ADD_CONTACT);
   const [editContact] = useMutation(EDIT_CONTACT);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,29 +138,41 @@ export default function AddToContactForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (id) {
-      console.log(formData);
-      editContact({
-        variables: {
-          id,
-          _set: {
-            first_name: formData.first_name,
-            last_name: formData.last_name,
+      if (data?.contact_by_pk) {
+        editContact({
+          variables: {
+            id,
+            _set: {
+              first_name: formData.first_name,
+              last_name: formData.last_name,
+            },
           },
-        },
-      }).catch((error) => {
-        console.error("Error adding contact:", error);
-      });
+        });
+      } else {
+        const favorite = JSON.parse(localStorage.getItem("favorite") as string);
+        const index = favorite.findIndex((item: any) => item.id === Number(id));
+        favorite[index].first_name = formData.first_name;
+        favorite[index].last_name = formData.last_name;
+        favorite[index].phones = formData.phones;
+        localStorage.setItem("favorite", JSON.stringify(favorite));
+      }
     } else {
+      const localData = JSON.parse(localStorage.getItem("localData") as string);
+      localData.push({
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        phones: formData.phones,
+      });
+      localStorage.setItem("localData", JSON.stringify(localData));
       addContact({
         variables: {
           first_name: formData.first_name,
           last_name: formData.last_name,
           phones: formData.phones,
         },
-      }).catch((error) => {
-        console.error("Error adding contact:", error);
       });
     }
+    navigate("/");
   };
 
   return (
@@ -224,7 +246,7 @@ export default function AddToContactForm() {
             </button>
           )}
           <button type="submit" className={buttonStyles}>
-            {id ? 'Edit':'Add'} Contact
+            {id ? "Edit" : "Add"} Contact
           </button>
         </div>
       </form>

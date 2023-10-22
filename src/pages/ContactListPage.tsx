@@ -1,17 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { css } from "@emotion/css";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { styled } from "styled-components";
-import { client } from "../service/apollo";
 import Header from "./Header";
 import { useNavigate } from "react-router-dom";
 
 export default function ContactListPage() {
   const [dataChanged, setDataChanged] = useState(false);
+  // const [pagination, setPagination] = useState({
+  //   limit: 0,
+  //   offset: 0,
+  // });
   const navigate = useNavigate();
+  const [indexDelete, setIndexDelete] = useState<number | null>(null);
   const GET_CONTACT = gql`
-    query {
+    query GetConctactList {
       contact {
         created_at
         first_name
@@ -23,6 +27,17 @@ export default function ContactListPage() {
       }
     }
   `;
+  // query GetConctactList($limit: Int!, $offset: Int!) {
+  //   contact(limit: $limit, offset: $offset) {
+  //     created_at
+  //     first_name
+  //     id
+  //     last_name
+  //     phones {
+  //       number
+  //     }
+  //   }
+  // }
 
   const DELETE_CONTACT = gql`
     mutation delete_contact_by_pk($id: Int!) {
@@ -32,17 +47,31 @@ export default function ContactListPage() {
     }
   `;
 
-  const [delete_contact_by_pk] = useMutation(DELETE_CONTACT);
+  const [delete_contact_by_pk, { data: deleteData }] = useMutation(
+    DELETE_CONTACT,
+    {
+      refetchQueries: [GET_CONTACT, "GetConctactList"],
+    }
+  );
+
+  useEffect(() => {
+    if (!deleteData?.delete_contact_by_pk?.id) {
+      if (indexDelete !== null) {
+        console.log(123);
+        const favorite = JSON.parse(localStorage.getItem("favorite") as string);
+        favorite.splice(indexDelete, 1);
+        localStorage.setItem("favorite", JSON.stringify(favorite));
+        setDataChanged(!dataChanged);
+        setIndexDelete(null);
+      }
+    }
+  }, [deleteData, indexDelete, setDataChanged, dataChanged]);
 
   const deleteContact = useCallback(
-    async (id: string) => {
+    async (id: string, index: number | null = null) => {
+      setIndexDelete(index);
       delete_contact_by_pk({
         variables: { id },
-      }).catch((error) => {
-        console.error("Error deleting contact:", error);
-      });
-      await client.refetchQueries({
-        include: "active",
       });
     },
     [delete_contact_by_pk]
@@ -55,62 +84,107 @@ export default function ContactListPage() {
     [navigate]
   );
 
-  const { loading, error, data } = useQuery(GET_CONTACT);
+  const { loading, error, data } = useQuery(GET_CONTACT, {
+    // variables: { ...pagination },
+  });
 
   const renderData = useMemo(() => {
-    const favorite = JSON.parse(localStorage.getItem("favorite") as string);
-    let result = data?.contact;
+    const localData =
+      (localStorage.getItem("localData") as string) !== undefined
+        ? JSON.parse(localStorage.getItem("localData") as string)
+        : null;
+    if (localData) {
+      if (data) {
+        const tempData = data?.contact?.filter((item: any) =>
+          !localData?.some((local: any) => local.id === item.id)
+        );
+        console.log(tempData)
+        const result = [...tempData, ...localData];
+        localStorage.setItem("localData", JSON.stringify(result));
+      }
+    } else {
+      if (data) {
+        localStorage.setItem("localData", JSON.stringify(data?.contact));
+      }
+    }
+    const favorite = (localStorage.getItem("favorite") as string)
+      ? JSON.parse(localStorage.getItem("favorite") as string)
+      : null;
+    let result = (localStorage.getItem("localData") as string) !== undefined
+    ? JSON.parse(localStorage.getItem("localData") as string)
+    : null;
     if (favorite) {
-      result = data?.contact?.filter(
+      result = result?.filter(
         (item: any) =>
           !favorite.some((favorite: any) => favorite.id === item.id)
       );
     }
     return (
       <>
-        {favorite?.length === 0 && (
+        {favorite?.length > 0 && (
           <h2
             className={css`
               margin: 0;
-              font-size: 1.2rem;
+              font-size: 1rem;
             `}
           >
             Favorites
           </h2>
         )}
-        {favorite?.map((contact: any) => (
-          <React.Fragment key={contact?.id}>
-            <ContactCard
-              contact={contact}
-              setDataChanged={setDataChanged}
-              onClickDelete={() => deleteContact(contact.id)}
-              dataChanged={dataChanged}
-              navigateToEdit={() => navigateToEdit(contact.id)}
-            />
-          </React.Fragment>
-        ))}
+        <div
+          className={css`
+            background: white;
+            display: flex;
+            flex-direction: column;
+            border-radius: 0.8rem;
+            padding: 0.5rem 20px;
+          `}
+        >
+          {favorite?.map((contact: any, index: number) => (
+            <React.Fragment key={contact?.id}>
+              <ContactCard
+                contact={contact}
+                setDataChanged={setDataChanged}
+                onClickDelete={() => deleteContact(contact.id, index)}
+                dataChanged={dataChanged}
+                navigateToEdit={() => navigateToEdit(contact.id)}
+              />
+            </React.Fragment>
+          ))}
+        </div>
+
         <h2
           className={css`
             margin-bottom: 0;
-            font-size: 1.2rem;
+            font-size: 1rem;
           `}
         >
           Regular Contact
         </h2>
-        {result?.map((contact: any) => (
-          <React.Fragment key={contact?.id}>
-            <ContactCard
-              contact={contact}
-              setDataChanged={setDataChanged}
-              dataChanged={dataChanged}
-              onClickDelete={() => deleteContact(contact.id)}
-              navigateToEdit={() => navigateToEdit(contact.id)}
-            />
-          </React.Fragment>
-        ))}
+        <div
+          className={css`
+            background: white;
+            display: flex;
+            flex-direction: column;
+            border-radius: 0.8rem;
+            padding: 0.5rem 20px;
+          `}
+        >
+          {result?.map((contact: any) => (
+            <React.Fragment key={contact?.id}>
+              <ContactCard
+                contact={contact}
+                setDataChanged={setDataChanged}
+                dataChanged={dataChanged}
+                onClickDelete={() => deleteContact(contact.id)}
+                navigateToEdit={() => navigateToEdit(contact.id)}
+              />
+            </React.Fragment>
+          ))}
+        </div>
       </>
     );
-  }, [data?.contact, dataChanged, deleteContact, navigateToEdit]);
+  }, [data, dataChanged, deleteContact, navigateToEdit]);
 
   return (
     <>
@@ -178,15 +252,16 @@ const ContactCard = ({
     <div
       key={contact?.id}
       className={css`
-        // card
-        padding: 1rem;
-        border-radius: 0.8rem;
+        padding: 0.8rem 0;
+        border-bottom: 2px solid #f7f7f7;
         height: 100%;
         display: flex;
         flex-direction: row;
         justify-content: between;
         align-items: center;
-        box-shadow: 0 0.4rem 0.6rem rgba(0, 0, 0, 0.15);
+        &:last-child {
+          border-bottom: none;
+        }
       `}
     >
       <div
@@ -195,7 +270,8 @@ const ContactCard = ({
           width: 3rem;
           height: 3rem;
           border-radius: 50%;
-          background-color: #cece;
+          background-color: #f7f7f7;
+          color: #00850b;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -208,7 +284,11 @@ const ContactCard = ({
         <span>{contact?.first_name[0]}</span>
         <span>{contact?.last_name[0]}</span>
       </div>
-      <div>
+      <div
+        className={css`
+          font-size: 14px;
+        `}
+      >
         <div
           className={css`
             font-weight: bold;
@@ -221,7 +301,6 @@ const ContactCard = ({
         <div
           className={css`
             font-size: 0.7rem;
-            color: #c4c4c4;
             font-weight: 300;
           `}
         >
