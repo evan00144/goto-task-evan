@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { css } from "@emotion/css";
@@ -7,10 +8,6 @@ import { useNavigate } from "react-router-dom";
 
 export default function ContactListPage() {
   const [dataChanged, setDataChanged] = useState(false);
-  // const [pagination, setPagination] = useState({
-  //   limit: 0,
-  //   offset: 0,
-  // });
   const navigate = useNavigate();
   const [indexDelete, setIndexDelete] = useState<number | null>(null);
   const GET_CONTACT = gql`
@@ -26,17 +23,6 @@ export default function ContactListPage() {
       }
     }
   `;
-  // query GetConctactList($limit: Int!, $offset: Int!) {
-  //   contact(limit: $limit, offset: $offset) {
-  //     created_at
-  //     first_name
-  //     id
-  //     last_name
-  //     phones {
-  //       number
-  //     }
-  //   }
-  // }
 
   const DELETE_CONTACT = gql`
     mutation delete_contact_by_pk($id: Int!) {
@@ -84,7 +70,6 @@ export default function ContactListPage() {
   );
 
   const { loading, error, data } = useQuery(GET_CONTACT, {
-    // variables: { ...pagination },
   });
 
   const [searchData, setSearchData] = useState("");
@@ -100,19 +85,18 @@ export default function ContactListPage() {
       ? JSON.parse(localStorage.getItem("favorite") as string)
       : null;
     let result = data?.contact;
-    console.log(result)
+    console.log(result);
 
-    // paginate
-   
+
     if (favorite) {
       result = result?.filter(
         (item: any) =>
           !favorite.some((favorite: any) => favorite.id === item.id)
       );
     }
-   
+
     let copyOfArray: any = result ? [...result] : null;
-    copyOfArray?.sort((a:any, b:any) => {
+    copyOfArray?.sort((a: any, b: any) => {
       const nameA = a.first_name.toUpperCase();
       const nameB = b.first_name.toUpperCase();
 
@@ -124,11 +108,11 @@ export default function ContactListPage() {
         return 0;
       }
     });
-    console.log(copyOfArray)
+    console.log(copyOfArray);
     if (pagination && copyOfArray) {
       const total = copyOfArray?.length;
       const totalPages = Math.ceil(total / pagination.perPage);
-      const offset = (pagination.page-1) * pagination.perPage;
+      const offset = (pagination.page - 1) * pagination.perPage;
       setPagination((prev) => ({
         ...prev,
         total: total,
@@ -136,7 +120,7 @@ export default function ContactListPage() {
       }));
       copyOfArray = copyOfArray?.slice(offset, offset + pagination.perPage);
     }
-    console.log(copyOfArray)
+    console.log(copyOfArray);
     if (searchData) {
       copyOfArray = copyOfArray?.filter((item: any) => {
         const name = (item.first_name + item.last_name).toUpperCase();
@@ -209,7 +193,6 @@ export default function ContactListPage() {
         })}
       </>
     );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     data,
     dataChanged,
@@ -261,7 +244,32 @@ export default function ContactListPage() {
       </>
     );
   }, [dataChanged, deleteContact, navigateToEdit]);
+  function generatePagination(currentPage:any, totalPages:any) {
+    const paginationArray = [currentPage];
 
+    if (currentPage > 1) {
+      paginationArray.unshift(currentPage - 1);
+      if (currentPage - 1 > 2) {
+        paginationArray.unshift('...');
+      } else if (currentPage - 1 === 2) {
+        paginationArray.unshift(1);
+      }
+    }
+
+    if (currentPage < totalPages) {
+      paginationArray.push(currentPage + 1);
+      if (currentPage + 1 < totalPages - 1) {
+        paginationArray.push('...');
+      } else if (currentPage + 1 === totalPages - 1) {
+        paginationArray.push(totalPages);
+      }
+    }
+
+    return paginationArray;
+
+
+  }
+  
   return (
     <>
       <Header />
@@ -375,30 +383,40 @@ export default function ContactListPage() {
                 align-items: center;
               `}
             >
-              {Array.from(Array(pagination?.totalPages).keys()).map(
-                (_, index) => (
-                  <span
-                    onClick={() =>
-                      setPagination((prev) => ({ ...prev, page: index + 1 }))
-                    }
-                    className={css`
-                      background-color: ${pagination?.page === index + 1
-                        ? "#00850B"
-                        : "transparent"};
-                      color: ${pagination?.page === index + 1 ? "white" : ""};
-                      border-radius: 50%;
-                      min-width: 2rem;
-                      min-height: 2rem;
-                      display: flex;
-                      line-height: 1;
-                      justify-content: center;
-                      align-items: center;
-                    `}
-                  >
-                    {index + 1}
-                  </span>
+              {generatePagination(pagination?.page, pagination?.totalPages).map((item) => {
+                return(
+                  <>
+                    <span
+                      onClick={() => {
+                        if(item !== '...'){
+                          
+                          setPagination((prev) => ({
+                            ...prev,
+                            page: item,
+                          }))
+                        }}
+                      }
+                      className={css`
+                        background-color: ${pagination?.page === item
+                          ? "#00850B"
+                          : "transparent"};
+                        color: ${pagination?.page === item
+                          ? "white"
+                          : ""};
+                        border-radius: 50%;
+                        min-width: 2rem;
+                        min-height: 2rem;
+                        display: flex;
+                        line-height: 1;
+                        justify-content: center;
+                        align-items: center;
+                      `}
+                    >
+                     {item}
+                    </span>
+                </>
                 )
-              )}
+              })}
             </div>
 
             <div
@@ -434,16 +452,6 @@ export default function ContactListPage() {
   );
 }
 
-// const Button = styled.button`
-//   border: none;
-//   border-radius: 0.8rem;
-//   // padding: 0.2rem 0.4rem;
-//   background-color: transparent;
-//   line-height: 1;
-//   display: flex;
-//   justify-content: center;
-//   align-items: center;
-// `;
 
 const ContactCard = ({ contact }: any) => {
   const navigate = useNavigate();
@@ -468,7 +476,6 @@ const ContactCard = ({ contact }: any) => {
     >
       <div
         className={css`
-          // circle
           min-width: 3rem;
           min-height: 3rem;
           border-radius: 50%;

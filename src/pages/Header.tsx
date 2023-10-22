@@ -69,6 +69,10 @@ export default function Header({ clickBack }:any) {
             background-color: transparent;
             border: none;
             color: #00850b !important;
+            background-color: white;
+            border-radius: 50%;
+            height: 2.3rem;
+            width: 2.3rem;
           `}
         >
           <svg
@@ -78,8 +82,8 @@ export default function Header({ clickBack }:any) {
             strokeWidth={1.5}
             stroke="currentColor"
             className={css`
-              width: 2rem;
-              height: 2rem;
+              width: 1.5rem;
+              height: 1.5rem;
             `}
           >
             <path

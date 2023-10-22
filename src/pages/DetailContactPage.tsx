@@ -161,7 +161,6 @@ export default function DetailContactPage() {
           >
             <div
               className={css`
-                // circle
                 width: 4rem;
                 height: 4rem;
                 border-radius: 50%;

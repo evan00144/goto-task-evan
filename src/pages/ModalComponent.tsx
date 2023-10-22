@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { css } from "@emotion/css";
 import styled from "styled-components";
-// Define styles for the modal
 const modalStyles = css`
   position: fixed;
   top: 0;

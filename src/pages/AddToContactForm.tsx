@@ -6,7 +6,6 @@ import Header from "./Header";
 import { gql, useMutation, useQuery } from "@apollo/client";
 import {
   useNavigate,
-  //  useNavigate,
   useParams,
 } from "react-router-dom";
 import Modal from "./ModalComponent";
@@ -39,7 +38,6 @@ const buttonStyles = css`
 
 export default function AddToContactForm() {
   const { id } = useParams();
-  // const navigate = useNavigate();
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
