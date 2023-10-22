@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import  { useCallback,  useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { css } from "@emotion/css";
 import Header from "./Header";
-import { gql,  useQuery } from "@apollo/client";
+import { gql, useMutation, useQuery } from "@apollo/client";
 import { useNavigate, useParams } from "react-router-dom";
 
 export default function DetailContactPage() {
@@ -28,26 +28,31 @@ export default function DetailContactPage() {
 
   const [dataChanged, setDataChanged] = useState(false);
   const favorite = JSON.parse(localStorage.getItem("favorite") as string);
-  const addToFavorite = useCallback((contact: any) => {
-    setDataChanged(!dataChanged);
-    const favorite = JSON.parse(localStorage.getItem("favorite") as string);
-    if (favorite) {
-      const exist = favorite.find((item: any) => item.id === contact.id);
-      if (!exist) {
-        localStorage.setItem(
-          "favorite",
-          JSON.stringify([...favorite, contact])
-        );
+  const addToFavorite = useCallback(
+    (contact: any) => {
+      setDataChanged(!dataChanged);
+      const favorite = JSON.parse(localStorage.getItem("favorite") as string);
+      if (favorite) {
+        const exist = favorite.find((item: any) => item.id === contact.id);
+        if (!exist) {
+          localStorage.setItem(
+            "favorite",
+            JSON.stringify([...favorite, contact])
+          );
+        } else {
+          localStorage.setItem(
+            "favorite",
+            JSON.stringify(
+              favorite.filter((item: any) => item.id !== contact.id)
+            )
+          );
+        }
       } else {
-        localStorage.setItem(
-          "favorite",
-          JSON.stringify(favorite.filter((item: any) => item.id !== contact.id))
-        );
+        localStorage.setItem("favorite", JSON.stringify([contact]));
       }
-    } else {
-      localStorage.setItem("favorite", JSON.stringify([contact]));
-    }
-  },[dataChanged]);
+    },
+    [dataChanged]
+  );
   const renderFavorite = useMemo(() => {
     return (
       <div onClick={() => addToFavorite(data?.contact_by_pk)}>
@@ -91,7 +96,42 @@ export default function DetailContactPage() {
     );
   }, [addToFavorite, data?.contact_by_pk, favorite]);
 
-  
+  const DELETE_CONTACT = gql`
+    mutation delete_contact_by_pk($id: Int!) {
+      delete_contact_by_pk(id: $id) {
+        id
+      }
+    }
+  `;
+  const [delete_contact_by_pk] = useMutation(
+    DELETE_CONTACT,
+    {
+      refetchQueries: [GET_CONTACT, "GetConctactList"],
+    }
+  );
+
+  const deleteContact = useCallback(
+    async (id: string | null = null) => {
+      const confirm = window.confirm("Are you sure to delete this contact?");
+      if (!confirm) return;
+      const favorite = (localStorage.getItem("favorite") as string)
+        ? JSON.parse(localStorage.getItem("favorite") as string)
+        : null;
+      if (favorite) {
+        localStorage.setItem(
+          "favorite",
+          JSON.stringify(
+            favorite.filter((item: any) => item.id !== data?.contact_by_pk?.id)
+          )
+        );
+      }
+      delete_contact_by_pk({
+        variables: { id },
+      });
+      window.location.href = "/";
+    },
+    [delete_contact_by_pk, data?.contact_by_pk?.id]
+  );
 
   return (
     <>
@@ -173,7 +213,7 @@ export default function DetailContactPage() {
           `}
         >
           <div
-          onClick={() => navigate(`/add/${id}`)}
+            onClick={() => navigate(`/add/${id}`)}
             className={css`
               padding: 0.8rem 0;
               border-bottom: 2px solid #f7f7f7;
@@ -195,7 +235,7 @@ export default function DetailContactPage() {
               viewBox="0 0 24 24"
               height={20}
               width={20}
-              stroke-width="1.5"
+              strokeWidth="1.5"
               stroke="currentColor"
               className={css`
                 color: #00850b !important;
@@ -203,14 +243,15 @@ export default function DetailContactPage() {
               `}
             >
               <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
               />
             </svg>
             Edit
           </div>
           <div
+            onClick={() => deleteContact(id as string)}
             className={css`
               padding: 0.8rem 0;
               border-bottom: 2px solid #f7f7f7;

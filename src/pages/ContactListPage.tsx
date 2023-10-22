@@ -98,9 +98,23 @@ export default function ContactListPage() {
           !favorite.some((favorite: any) => favorite.id === item.id)
       );
     }
+    const copyOfArray = result ? [...result] : null;
+    copyOfArray?.sort((a, b) => {
+      const nameA = a.first_name.toUpperCase();
+      const nameB = b.first_name.toUpperCase();
+
+      if (nameA < nameB) {
+        return -1;
+      } else if (nameA > nameB) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+
     const groupedData: any = {};
 
-    result?.forEach((item: any) => {
+    copyOfArray?.forEach((item: any) => {
       const firstLetter =
         typeof item.first_name[0] === "string"
           ? item.first_name[0].toUpperCase()
@@ -138,9 +152,13 @@ export default function ContactListPage() {
                     typeof contact.first_name[0] === "string"
                       ? contact.first_name[0].toUpperCase()
                       : contact.first_name[0];
-                  if (firstLetter !==( typeof alphabet === "string"
-                  ? alphabet.toUpperCase()
-                  : alphabet)) return null;
+                  if (
+                    firstLetter !==
+                    (typeof alphabet === "string"
+                      ? alphabet.toUpperCase()
+                      : alphabet)
+                  )
+                    return null;
                   return (
                     <React.Fragment key={contact?.id}>
                       <ContactCard
@@ -263,8 +281,8 @@ const ContactCard = ({ contact }: any) => {
       <div
         className={css`
           // circle
-          width: 3rem;
-          height: 3rem;
+          min-width: 3rem;
+          min-height: 3rem;
           border-radius: 50%;
           background-color: #f7f7f7;
           color: #00850b !important;
