@@ -27,23 +27,28 @@ export default function DetailContactPage() {
   });
 
   const [dataChanged, setDataChanged] = useState(false);
-  const favorite = JSON.parse(localStorage.getItem("favorite") as string);
+  const favorite = (localStorage.getItem("favorite") as string)
+    ? JSON.parse(localStorage.getItem("favorite") as string)
+    : null;
+  const favoriteData = favorite?.find((item: any) => item.id === Number(id));
+
   const addToFavorite = useCallback(
     (contact: any) => {
       setDataChanged(!dataChanged);
       const favorite = JSON.parse(localStorage.getItem("favorite") as string);
       if (favorite) {
-        const exist = favorite.find((item: any) => item.id === contact.id);
+        const exist = favorite.find((item: any) => item.id === Number(id));
         if (!exist) {
           localStorage.setItem(
             "favorite",
             JSON.stringify([...favorite, contact])
           );
         } else {
+          console.log(favorite.filter((item: any) => item.id !== Number(id)))
           localStorage.setItem(
             "favorite",
             JSON.stringify(
-              favorite.filter((item: any) => item.id !== contact.id)
+              favorite.filter((item: any) => item.id !== Number(id))
             )
           );
         }
@@ -51,13 +56,13 @@ export default function DetailContactPage() {
         localStorage.setItem("favorite", JSON.stringify([contact]));
       }
     },
-    [dataChanged]
+    [dataChanged, id]
   );
   const renderFavorite = useMemo(() => {
     return (
       <div onClick={() => addToFavorite(data?.contact_by_pk)}>
         {favorite &&
-        favorite?.find((item: any) => item.id === data?.contact_by_pk?.id) ? (
+        favorite?.find((item: any) => item.id === Number(id)) ? (
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -94,7 +99,7 @@ export default function DetailContactPage() {
         )}
       </div>
     );
-  }, [addToFavorite, data?.contact_by_pk, favorite]);
+  }, [addToFavorite, data?.contact_by_pk, favorite, id]);
 
   const DELETE_CONTACT = gql`
     mutation delete_contact_by_pk($id: Int!) {
@@ -103,12 +108,9 @@ export default function DetailContactPage() {
       }
     }
   `;
-  const [delete_contact_by_pk] = useMutation(
-    DELETE_CONTACT,
-    {
-      refetchQueries: [GET_CONTACT, "GetConctactList"],
-    }
-  );
+  const [delete_contact_by_pk] = useMutation(DELETE_CONTACT, {
+    refetchQueries: [GET_CONTACT, "GetConctactList"],
+  });
 
   const deleteContact = useCallback(
     async (id: string | null = null) => {
@@ -121,18 +123,19 @@ export default function DetailContactPage() {
         localStorage.setItem(
           "favorite",
           JSON.stringify(
-            favorite.filter((item: any) => item.id !== data?.contact_by_pk?.id)
+            favorite.filter((item: any) => item.id !== Number(id))
           )
         );
+        
       }
       delete_contact_by_pk({
         variables: { id },
       });
       window.location.href = "/";
     },
-    [delete_contact_by_pk, data?.contact_by_pk?.id]
+    [delete_contact_by_pk]
   );
-
+  console.log(favoriteData);
   return (
     <>
       <Header />
@@ -174,8 +177,14 @@ export default function DetailContactPage() {
                 margin-right: 0.5rem;
               `}
             >
-              <span>{data?.contact_by_pk?.first_name[0]}</span>
-              <span>{data?.contact_by_pk?.last_name[0]}</span>
+              <span>
+                {data?.contact_by_pk?.first_name[0] ||
+                  favoriteData?.first_name[0]}
+              </span>
+              <span>
+                {data?.contact_by_pk?.last_name[0] ||
+                  favoriteData?.last_name[0]}
+              </span>
             </div>
             {renderFavorite}
           </div>
@@ -185,10 +194,13 @@ export default function DetailContactPage() {
               margin-bottom: 0.5rem;
             `}
           >
-            {data?.contact_by_pk?.first_name} {data?.contact_by_pk?.last_name}
+            {data?.contact_by_pk?.first_name || favoriteData?.first_name}{" "}
+            {data?.contact_by_pk?.last_name || favoriteData?.last_name}
           </h4>
           {/* phone */}
           {data?.contact_by_pk?.phones.length <= 0 && "No Phone Number"}
+          {favoriteData?.phones.length <= 0 && "No Phone Number"}
+
           {data?.contact_by_pk?.phones.map((phone: any, index: number) => (
             <div
               key={index}
@@ -201,6 +213,19 @@ export default function DetailContactPage() {
               {phone.number}
             </div>
           ))}
+          {favoriteData && data?.contact_by_pk?.phones.length <= 0 && 
+            favoriteData?.phones.map((phone: any, index: number) => (
+              <div
+                key={index}
+                className={css`
+                  display: flex;
+                  align-items: center;
+                  margin-bottom: 0.5rem;
+                `}
+              >
+                {phone.number}
+              </div>
+            ))}
         </div>
         <div
           className={css`

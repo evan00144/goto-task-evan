@@ -275,6 +275,7 @@ export default function AddToContactForm() {
               ...modalConfig,
               isOpen: false,
             });
+            window.location.href = "/";
           },
         });
       }

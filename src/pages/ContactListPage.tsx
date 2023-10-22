@@ -87,19 +87,32 @@ export default function ContactListPage() {
     // variables: { ...pagination },
   });
 
+  const [searchData, setSearchData] = useState("");
+
+  const [pagination, setPagination] = useState({
+    perPage: 15,
+    page: 1,
+    totalPages: 0,
+    total: 0,
+  });
   const renderData = useMemo(() => {
     const favorite = (localStorage.getItem("favorite") as string)
       ? JSON.parse(localStorage.getItem("favorite") as string)
       : null;
     let result = data?.contact;
+    console.log(result)
+
+    // paginate
+   
     if (favorite) {
       result = result?.filter(
         (item: any) =>
           !favorite.some((favorite: any) => favorite.id === item.id)
       );
     }
-    const copyOfArray = result ? [...result] : null;
-    copyOfArray?.sort((a, b) => {
+   
+    let copyOfArray: any = result ? [...result] : null;
+    copyOfArray?.sort((a:any, b:any) => {
       const nameA = a.first_name.toUpperCase();
       const nameB = b.first_name.toUpperCase();
 
@@ -111,9 +124,28 @@ export default function ContactListPage() {
         return 0;
       }
     });
+    console.log(copyOfArray)
+    if (pagination && copyOfArray) {
+      const total = copyOfArray?.length;
+      const totalPages = Math.ceil(total / pagination.perPage);
+      const offset = (pagination.page-1) * pagination.perPage;
+      setPagination((prev) => ({
+        ...prev,
+        total: total,
+        totalPages: totalPages,
+      }));
+      copyOfArray = copyOfArray?.slice(offset, offset + pagination.perPage);
+    }
+    console.log(copyOfArray)
+    if (searchData) {
+      copyOfArray = copyOfArray?.filter((item: any) => {
+        const name = (item.first_name + item.last_name).toUpperCase();
+
+        return name.includes(searchData.toUpperCase());
+      });
+    }
 
     const groupedData: any = {};
-
     copyOfArray?.forEach((item: any) => {
       const firstLetter =
         typeof item.first_name[0] === "string"
@@ -147,7 +179,7 @@ export default function ContactListPage() {
                   padding: 0rem 20px;
                 `}
               >
-                {result?.map((contact: any) => {
+                {copyOfArray?.map((contact: any) => {
                   const firstLetter =
                     typeof contact.first_name[0] === "string"
                       ? contact.first_name[0].toUpperCase()
@@ -177,7 +209,15 @@ export default function ContactListPage() {
         })}
       </>
     );
-  }, [data, dataChanged, deleteContact, navigateToEdit]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    data,
+    dataChanged,
+    deleteContact,
+    navigateToEdit,
+    searchData,
+    pagination.page,
+  ]);
 
   const renderFavorite = useMemo(() => {
     const favorite = (localStorage.getItem("favorite") as string)
@@ -232,14 +272,162 @@ export default function ContactListPage() {
       >
         <div
           className={css`
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            background-color: white;
+            padding: 0.6rem 0;
+            border-radius: 0.5rem;
+          `}
+        >
+          <div
+            className={css`
+              color: #b9b9b9;
+              padding: 0 1rem;
+            `}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              height={24}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+              />
+            </svg>
+          </div>
+          <div
+            className={css`
+              flex: 1;
+            `}
+          >
+            <input
+              type="text"
+              placeholder="Find Contact"
+              value={searchData}
+              onChange={(e) => setSearchData(e.target.value)}
+              className={css`
+                border: none;
+                outline: none;
+                &::placeholder {
+                  color: #b9b9b9;
+                }
+                font-weight: 600;
+              `}
+            />
+          </div>
+        </div>
+        <div
+          className={css`
             display: grid;
             grid-template-columns: 1fr;
             gap: 1rem;
+            font-weight: bold;
           `}
         >
           {renderFavorite}
           {loading ? <p>Loading...</p> : renderData}
           {error && <p>Error :{error.message}</p>}
+          {/* Pagination */}
+          <div
+            className={css`
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-top: 1rem;
+            `}
+          >
+            <div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                height={20}
+                onClick={
+                  pagination?.page > 1
+                    ? () =>
+                        setPagination((prev) => ({
+                          ...prev,
+                          page: prev.page - 1,
+                        }))
+                    : undefined
+                }
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+                />
+              </svg>
+            </div>
+
+            <div
+              className={css`
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              `}
+            >
+              {Array.from(Array(pagination?.totalPages).keys()).map(
+                (_, index) => (
+                  <span
+                    onClick={() =>
+                      setPagination((prev) => ({ ...prev, page: index + 1 }))
+                    }
+                    className={css`
+                      background-color: ${pagination?.page === index + 1
+                        ? "#00850B"
+                        : "transparent"};
+                      color: ${pagination?.page === index + 1 ? "white" : ""};
+                      border-radius: 50%;
+                      min-width: 2rem;
+                      min-height: 2rem;
+                      display: flex;
+                      line-height: 1;
+                      justify-content: center;
+                      align-items: center;
+                    `}
+                  >
+                    {index + 1}
+                  </span>
+                )
+              )}
+            </div>
+
+            <div
+              onClick={
+                pagination?.page < pagination?.totalPages
+                  ? () =>
+                      setPagination((prev) => ({
+                        ...prev,
+                        page: prev.page + 1,
+                      }))
+                  : undefined
+              }
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                height={20}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
     </>
@@ -321,56 +509,6 @@ const ContactCard = ({ contact }: any) => {
           {contact?.phones[0]?.number || "No phone number"}
         </div>
       </div>
-      {/* <Button
-        name="Edit"
-        className={css`
-          margin-left: auto;
-        `}
-        onClick={navigateToEdit}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-          className={css`
-            width: 1rem;
-            height: 1rem;
-          `}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-          />
-        </svg>
-      </Button>
-      <Button
-        name="Delete"
-        className={css`
-          margin-left: 0.5rem;
-        `}
-        onClick={onClickDelete}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-          className={css`
-            width: 1rem;
-            height: 1rem;
-          `}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-          />
-        </svg>
-      </Button>*/}
       {favorite?.find((item: any) => item.id === contact.id) && (
         <button
           name="Favorite"
